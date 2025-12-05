@@ -1,7 +1,9 @@
 // Service Worker for Chromium History Chat Extension
 // Handles background tasks, history access, and message passing
 
-// Import WASM module
+// Import WASM module using static import (required for service workers)
+import initWasm from '../wasm/chromium_history_wasm.js';
+
 let wasmModule = null;
 
 // Initialize on service worker startup
@@ -21,9 +23,8 @@ self.addEventListener('activate', (event) => {
 // Initialize WASM module
 async function initializeWasm() {
   try {
-    const wasmPath = chrome.runtime.getURL('wasm/chromium_history_wasm.js');
-    const wasmInit = await import(wasmPath);
-    wasmModule = wasmInit;
+    const wasmPath = chrome.runtime.getURL('wasm/chromium_history_wasm_bg.wasm');
+    wasmModule = await initWasm(wasmPath);
     console.log('WASM module initialized successfully');
   } catch (error) {
     console.error('Failed to initialize WASM module:', error);
