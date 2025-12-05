@@ -1,0 +1,49 @@
+# Rust
+rust/target/
+rust/Cargo.lock
+
+# Dart
+dart/.dart_tool/
+dart/.packages
+dart/pubspec.lock
+dart/build/
+
+# Compiled outputs
+extension/lib/*.js
+extension/lib/*.js.map
+extension/wasm/*.wasm
+extension/wasm/*.js
+
+# WASM build artifacts
+rust/pkg/
+*.wasm
+
+# Node modules (if using any build tools)
+node_modules/
+package-lock.json
+yarn.lock
+
+# IDE specific
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS specific
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+dist/
+build/
+*.log
+
+# Temporary files
+*.tmp
+*.bak
+
+# Extension packaging
+*.crx
+*.pem
+*.zip

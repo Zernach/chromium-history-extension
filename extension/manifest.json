@@ -1,0 +1,45 @@
+{
+  "manifest_version": 3,
+  "name": "Chromium History Chat",
+  "version": "0.1.0",
+  "description": "Chat with OpenAI about your browsing history",
+  "author": "Chromium History Extension Team",
+
+  "permissions": [
+    "history",
+    "storage"
+  ],
+
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+      "16": "assets/icon-16.png",
+      "48": "assets/icon-48.png",
+      "128": "assets/icon-128.png"
+    }
+  },
+
+  "icons": {
+    "16": "assets/icon-16.png",
+    "48": "assets/icon-48.png",
+    "128": "assets/icon-128.png"
+  },
+
+  "background": {
+    "service_worker": "background/service_worker.js",
+    "type": "module"
+  },
+
+  "options_page": "options/options.html",
+
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'"
+  },
+
+  "web_accessible_resources": [
+    {
+      "resources": ["wasm/*.wasm"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}

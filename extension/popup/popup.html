@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>History Chat</title>
+    <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+    <div id="app-container">
+        <div id="header">
+            <h1>History Chat</h1>
+        </div>
+
+        <div id="api-key-warning" class="warning hidden">
+            <p>⚠️ OpenAI API key not set. <a href="#" id="open-options">Set up API key</a></p>
+        </div>
+
+        <div id="chat-container">
+            <div id="messages"></div>
+        </div>
+
+        <div id="input-container">
+            <textarea
+                id="user-input"
+                placeholder="Ask about your browsing history..."
+                rows="2"
+            ></textarea>
+            <button id="send-button" disabled>Send</button>
+        </div>
+
+        <div id="loading-indicator" class="hidden">
+            <div class="spinner"></div>
+            <span>Thinking...</span>
+        </div>
+
+        <div id="error-container" class="hidden"></div>
+    </div>
+
+    <script type="module" src="../lib/popup.js"></script>
+</body>
+</html>

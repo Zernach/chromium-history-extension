@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>History Chat - Settings</title>
+    <link rel="stylesheet" href="options.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>History Chat Settings</h1>
+        </header>
+
+        <main>
+            <section class="settings-section">
+                <h2>OpenAI API Configuration</h2>
+                <p class="description">
+                    This extension requires your own OpenAI API key to function. Your API key is stored locally and never shared.
+                </p>
+
+                <div class="form-group">
+                    <label for="api-key-input">API Key</label>
+                    <input
+                        type="password"
+                        id="api-key-input"
+                        placeholder="sk-..."
+                        autocomplete="off"
+                    />
+                    <div id="api-key-status" class="status-message"></div>
+                </div>
+
+                <div class="button-group">
+                    <button id="save-api-key-button" class="btn btn-primary">Save API Key</button>
+                    <button id="clear-api-key-button" class="btn btn-secondary">Clear API Key</button>
+                    <button id="toggle-visibility-button" class="btn btn-secondary">Show/Hide</button>
+                </div>
+
+                <div class="info-box">
+                    <strong>Don't have an API key?</strong>
+                    <p>Get one from <a href="https://platform.openai.com/api-keys" target="_blank">OpenAI Platform</a></p>
+                </div>
+            </section>
+
+            <section class="settings-section">
+                <h2>Privacy & History Settings</h2>
+
+                <div class="form-group">
+                    <label for="history-range">History Date Range (days)</label>
+                    <input
+                        type="number"
+                        id="history-range"
+                        value="30"
+                        min="1"
+                        max="365"
+                    />
+                    <p class="help-text">Only include history from the last N days</p>
+                </div>
+
+                <div class="form-group">
+                    <label for="max-results">Maximum Results</label>
+                    <input
+                        type="number"
+                        id="max-results"
+                        value="100"
+                        min="10"
+                        max="1000"
+                    />
+                    <p class="help-text">Maximum number of history entries to process</p>
+                </div>
+
+                <button id="save-preferences-button" class="btn btn-primary">Save Preferences</button>
+                <div id="preferences-status" class="status-message"></div>
+            </section>
+
+            <section class="settings-section">
+                <h2>Chat History</h2>
+                <p class="description">
+                    Clear your chat conversation history. This will not affect your browser history.
+                </p>
+
+                <button id="clear-chat-button" class="btn btn-danger">Clear Chat History</button>
+                <div id="clear-chat-status" class="status-message"></div>
+            </section>
+
+            <section class="settings-section">
+                <h2>About</h2>
+                <p class="description">
+                    <strong>Chromium History Chat Extension</strong><br>
+                    Version 0.1.0
+                </p>
+                <p class="description">
+                    This extension allows you to chat with OpenAI about your browsing history.
+                    All data is processed locally using WebAssembly for performance and privacy.
+                </p>
+                <p class="description">
+                    <strong>Privacy Note:</strong> Your browsing history is only sent to OpenAI's API using your API key.
+                    No data is shared with third parties.
+                </p>
+            </section>
+        </main>
+    </div>
+
+    <script type="module" src="../lib/options.js"></script>
+</body>
+</html>
