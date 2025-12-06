@@ -10,15 +10,29 @@ echo "========================================="
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BUILDS_DIR="$PROJECT_ROOT/../../chromium-history-extension-builds"
 
-# Extract version from manifest.json
+# Step 0: Bump version before building
+echo ""
+echo "Step 0: Bumping version..."
+BUMP_TYPE="${1:-patch}"  # Allow override via command line argument
+
+# Check if bump-version.sh exists
+if [ ! -f "$PROJECT_ROOT/bump-version.sh" ]; then
+    echo "Error: bump-version.sh not found"
+    exit 1
+fi
+
+# Call bump-version.sh to bump and sync version
+bash "$PROJECT_ROOT/bump-version.sh" "$BUMP_TYPE"
+echo ""
+
+# Extract version from manifest.json (after bump)
 VERSION=$(grep -o '"version": "[^"]*"' "$PROJECT_ROOT/extension/manifest.json" | cut -d'"' -f4)
 if [ -z "$VERSION" ]; then
     VERSION="unknown"
     echo "Warning: Could not extract version from manifest.json, using 'unknown'"
 fi
 
-echo ""
-echo "Version: $VERSION"
+echo "Building with version: $VERSION"
 echo ""
 
 # Step 1: Build the extension

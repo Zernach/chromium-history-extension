@@ -50,11 +50,11 @@
                     <input
                         type="number"
                         id="history-range"
-                        value="30"
+                        value="365"
                         min="1"
                         max="365"
                     />
-                    <p class="help-text">Only include history from the last N days</p>
+                    <p class="help-text">Only include history from the last N days (up to 365 days, 1 year)</p>
                 </div>
 
                 <div class="form-group">
@@ -62,11 +62,11 @@
                     <input
                         type="number"
                         id="max-results"
-                        value="100"
+                        value="1000"
                         min="10"
                         max="1000"
                     />
-                    <p class="help-text">Maximum number of history entries to process</p>
+                    <p class="help-text">Maximum number of history entries to send to the AI (up to 1000). More entries = better context, but may use more tokens.</p>
                 </div>
 
                 <button id="save-preferences-button" class="btn btn-primary">Save Preferences</button>
@@ -87,7 +87,7 @@
                 <h2>About</h2>
                 <p class="description">
                     <strong>Chromium History Chat Extension</strong><br>
-                    Version 0.1.0
+                    Version <span id="extension-version">loading...</span>
                 </p>
                 <p class="description">
                     This extension allows you to chat with OpenAI about your browsing history.

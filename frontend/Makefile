@@ -19,8 +19,12 @@ install:
 	@which wasm-pack > /dev/null || (echo "wasm-pack not found. Install with: cargo install wasm-pack" && exit 1)
 	@echo "All dependencies installed!"
 
-build: build-rust build-dart
+build: sync-version build-rust build-dart
 	@echo "Build complete! Extension is ready in ./extension/"
+
+sync-version:
+	@echo "Syncing version from manifest.json..."
+	@bash sync-version.sh
 
 build-rust:
 	@echo "Building Rust to WebAssembly..."

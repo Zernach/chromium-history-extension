@@ -2,9 +2,28 @@
 
 set -e
 
+# Get the project root directory
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Source the sync-version script to get sync_version function
+if [ -f "$PROJECT_ROOT/sync-version.sh" ]; then
+    source "$PROJECT_ROOT/sync-version.sh"
+else
+    echo "Warning: sync-version.sh not found, skipping version sync"
+    sync_version() {
+        echo "Skipping version sync (sync-version.sh not available)"
+    }
+fi
+
 echo "========================================="
 echo "Building Chromium History Extension"
 echo "========================================="
+
+# Sync version from manifest.json to all files before building
+echo ""
+echo "Step 0: Syncing version across all files..."
+sync_version
+echo ""
 
 # Check if wasm-pack is installed
 if ! command -v wasm-pack &> /dev/null; then

@@ -158,6 +158,56 @@ If you prefer to build manually:
 
 5. The extension icon should appear in your browser toolbar
 
+## Version Management
+
+Version management is **fully automated**. The version is stored in `extension/manifest.json` as the source of truth, and all other files are automatically synced.
+
+### Automatic Version Sync
+
+Version synchronization happens automatically:
+- **During builds**: `make build` and `./build.sh` automatically sync versions before building
+- **During compilation**: `./compile.sh` syncs versions after bumping
+- **Manual sync**: Run `./sync-version.sh` to sync versions from manifest.json to all files
+
+### Files That Are Automatically Synced
+
+- `extension/manifest.json` (source of truth)
+- `dart/pubspec.yaml`
+- `rust/Cargo.toml`
+- `PROJECT_STATUS.md`
+- `extension/options/options.html` (dynamically reads from manifest at runtime)
+
+### Bumping Versions
+
+To bump the version, use the bump script:
+
+```bash
+# Bump patch version (0.1.1 → 0.1.2)
+./bump-version.sh patch
+
+# Bump minor version (0.1.1 → 0.2.0)
+./bump-version.sh minor
+
+# Bump major version (0.1.1 → 1.0.0)
+./bump-version.sh major
+```
+
+The script will:
+1. Read the current version from `manifest.json`
+2. Bump it according to the type (patch/minor/major)
+3. Update `manifest.json`
+4. Automatically sync the new version to all other files
+
+### Manual Version Sync
+
+If you manually edit the version in `manifest.json`, sync it to all files:
+
+```bash
+./sync-version.sh
+```
+
+**Note**: You should never need to manually edit versions in multiple files. Always edit `manifest.json` and run `./sync-version.sh`, or use `./bump-version.sh` to bump versions.
+
 ## Configuration
 
 ### Backend Setup (Required)
