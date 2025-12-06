@@ -33,6 +33,9 @@ Successfully implemented a Go-based Google Cloud Function backend for the Chromi
 - Removed API key requirement from requests
 - Updated error handling for backend responses
 - Simplified `checkApiKey()` (always returns true now)
+- **Enhanced history fetching to support up to 100,000 records** (increased from 1,000)
+- **Implemented smart pagination** to work around Chrome API's 10,000-per-call limit
+- **Time-based batching** with automatic deduplication for large history datasets
 
 #### UI Updates
 - **options.html** - Removed OpenAI API key input section
@@ -59,6 +62,15 @@ Successfully implemented a Go-based Google Cloud Function backend for the Chromi
 User Query → Extension Popup → Service Worker → Rust/WASM (processing) →
 → HTTP POST to Cloud Function → OpenAI API → Response → Extension UI
 ```
+
+### History Processing Capacity
+
+The extension supports **up to 100,000 browsing history records**:
+- Smart batching fetches records in 10k chunks (Chrome API limit)
+- Time-window based strategy to gather comprehensive history
+- Automatic deduplication of URLs across batches
+- WebSocket-based transmission for large datasets
+- Memory-efficient backend handling with threshold warnings
 
 ### Key Features Implemented
 
@@ -87,11 +99,27 @@ User Query → Extension Popup → Service Worker → Rust/WASM (processing) →
    - Graceful fallbacks for API failures
    - Detailed logging for debugging
 
-5. **Monitoring**
+5. **Large-Scale History Support (up to 100,000 records)**
+   - **Frontend**: Smart pagination with time-based batching
+     - Automatically fetches history in 10k chunks (Chrome API limit)
+     - Deduplicates entries by URL + timestamp
+     - Configurable max results (default: 100,000)
+   - **Backend WebSocket**: Efficient batch processing
+     - Accepts history batches via WebSocket protocol
+     - Tracks accumulated history per session (max 100k entries)
+     - Memory estimation and warning thresholds (50k entries)
+     - Performance metrics logging for batch operations
+   - **Memory Management**
+     - Estimated ~20MB for 100k entries (~200 bytes per entry)
+     - Automatic truncation at limits with client notifications
+     - Session-based cleanup on disconnect
+
+6. **Monitoring**
    - Cloud Function logging integration
    - Request/response logging
    - Error tracking
    - Performance metrics via GCP Console
+   - History batch metrics (size, timing, memory estimates)
 
 ## Deployment Configuration
 

@@ -47,6 +47,9 @@ Chrome Extension → Cloud Function Backend → OpenAI API
 - Modified `chatWithHistory()` to call backend instead of OpenAI directly
 - Removed API key requirement
 - Updated error handling for backend responses
+- **Enhanced to support up to 100,000 history records** (increased from 1,000)
+- **Implemented smart pagination** to bypass Chrome API's 10,000-per-call limit
+- Time-based batching with automatic deduplication
 
 **Options Page** (`chromium-extension/extension/options/options.html`):
 - Removed OpenAI API key input section
@@ -78,6 +81,33 @@ cd ../chromium-extension
 make build
 ```
 
+## History Capacity
+
+### Large-Scale History Support
+
+The extension now supports **up to 100,000 browsing history records**:
+
+- **Frontend**: Smart batching algorithm to fetch 100k+ records from Chrome API
+- **Backend**: WebSocket-based batching to handle large datasets efficiently
+- **Memory Management**: Automatic threshold warnings and limits to prevent resource exhaustion
+
+### How It Works
+
+1. **Chrome API Batching**: Chrome's `history.search()` API has a hard limit of 10,000 results per call
+2. **Time-Window Strategy**: Extension automatically divides the time range into multiple batches
+3. **Deduplication**: Removes duplicate URLs and keeps the most recent visit data
+4. **Efficient Transmission**: Sends history in batches over WebSocket to backend
+
+### Configuration
+
+Default user preferences (adjustable in options page):
+- `historyRangeDays`: 365 days (1 year)
+- `maxResults`: 100,000 records
+
+Backend limits:
+- `MAX_HISTORY_ENTRIES`: 100,000
+- `HISTORY_MEMORY_WARNING_THRESHOLD`: 50,000
+
 ## API Specification
 
 ### Endpoint
@@ -97,6 +127,15 @@ make build
       "last_visit_time": 1702345678000
     }
   ]
+}
+```
+
+**Note**: For large history datasets (>10,000 records), use WebSocket batching:
+
+```json
+{
+  "type": "history_batch",
+  "history": [ /* batch of up to 10,000 entries */ ]
 }
 ```
 

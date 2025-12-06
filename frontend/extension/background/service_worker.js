@@ -92,13 +92,14 @@ async function getUserPreferences() {
       const prefs = result.user_preferences || {};
       resolve({
         historyRangeDays: prefs.historyRangeDays || 365, // Default to 365 days (1 year) for maximum history
-        maxResults: prefs.maxResults || 1000 // Default to 1000, but user can set up to 1000
+        maxResults: prefs.maxResults || 100000 // Default to 100,000 records
       });
     });
   });
 }
 
-// Fetch browser history
+// Fetch browser history with support for large datasets (up to 100,000 records)
+// Chrome API has a hard limit of 10,000 per call, so we implement smart batching
 async function fetchHistory(params = {}) {
   // Get user preferences
   const preferences = await getUserPreferences();
@@ -114,28 +115,100 @@ async function fetchHistory(params = {}) {
   // Use user preference for time range if not specified
   const calculatedStartTime = startTime || (Date.now() - (historyRangeDays * 24 * 60 * 60 * 1000));
   
-  // Fetch lots of history from Chrome API (use max allowed or user preference * 10 for safety)
-  // Chrome API allows up to 10,000 results, but we want to fetch as much as possible
-  const chromeApiMaxResults = maxResults || 10000;
+  // Target number of results (can be up to 100,000)
+  const targetMaxResults = maxResults || 100000;
+  
+  // Chrome API has a HARD limit of 10,000 per call
+  const CHROME_API_LIMIT = 10000;
+  
+  console.log(`[fetchHistory] Fetching history: text="${text}", startTime=${new Date(calculatedStartTime).toISOString()}, endTime=${new Date(endTime).toISOString()}, range=${historyRangeDays} days, targetMaxResults=${targetMaxResults}`);
 
-  console.log(`[fetchHistory] Fetching history: text="${text}", startTime=${new Date(calculatedStartTime).toISOString()}, endTime=${new Date(endTime).toISOString()}, range=${historyRangeDays} days, maxResults=${chromeApiMaxResults}`);
-
-  return new Promise((resolve, reject) => {
-    chrome.history.search({
-      text,
-      startTime: calculatedStartTime,
-      endTime,
-      maxResults: chromeApiMaxResults
-    }, (historyItems) => {
-      if (chrome.runtime.lastError) {
-        console.error(`[fetchHistory] Error: ${chrome.runtime.lastError.message}`);
-        reject(new Error(chrome.runtime.lastError.message));
-      } else {
-        console.log(`[fetchHistory] Chrome API returned ${historyItems.length} items (requested ${chromeApiMaxResults})`);
-        resolve({ historyItems });
-      }
+  // If requesting <= 10,000, make a single call (fast path)
+  if (targetMaxResults <= CHROME_API_LIMIT) {
+    return new Promise((resolve, reject) => {
+      chrome.history.search({
+        text,
+        startTime: calculatedStartTime,
+        endTime,
+        maxResults: targetMaxResults
+      }, (historyItems) => {
+        if (chrome.runtime.lastError) {
+          console.error(`[fetchHistory] Error: ${chrome.runtime.lastError.message}`);
+          reject(new Error(chrome.runtime.lastError.message));
+        } else {
+          console.log(`[fetchHistory] Chrome API returned ${historyItems.length} items (requested ${targetMaxResults})`);
+          resolve({ historyItems });
+        }
+      });
     });
-  });
+  }
+
+  // For larger requests, batch fetch by time windows
+  // Strategy: Divide time range into multiple chunks and fetch 10,000 from each
+  const allHistoryItems = [];
+  const urlMap = new Map(); // Track unique URLs to avoid duplicates
+  const timeRange = endTime - calculatedStartTime;
+  const numBatches = Math.ceil(targetMaxResults / CHROME_API_LIMIT);
+  const timeChunkSize = Math.floor(timeRange / numBatches);
+  
+  console.log(`[fetchHistory] Large request: fetching in ${numBatches} time-based batches`);
+
+  for (let i = 0; i < numBatches && allHistoryItems.length < targetMaxResults; i++) {
+    const batchStartTime = calculatedStartTime + (i * timeChunkSize);
+    const batchEndTime = i === numBatches - 1 ? endTime : calculatedStartTime + ((i + 1) * timeChunkSize);
+    const remainingNeeded = targetMaxResults - allHistoryItems.length;
+    const batchMaxResults = Math.min(CHROME_API_LIMIT, remainingNeeded);
+
+    console.log(`[fetchHistory] Batch ${i + 1}/${numBatches}: ${new Date(batchStartTime).toISOString()} to ${new Date(batchEndTime).toISOString()}, requesting ${batchMaxResults}`);
+
+    try {
+      const batchItems = await new Promise((resolve, reject) => {
+        chrome.history.search({
+          text,
+          startTime: batchStartTime,
+          endTime: batchEndTime,
+          maxResults: batchMaxResults
+        }, (historyItems) => {
+          if (chrome.runtime.lastError) {
+            reject(new Error(chrome.runtime.lastError.message));
+          } else {
+            resolve(historyItems);
+          }
+        });
+      });
+
+      console.log(`[fetchHistory] Batch ${i + 1} returned ${batchItems.length} items`);
+      
+      // Add unique items (keep most recent visit)
+      for (const item of batchItems) {
+        if (!urlMap.has(item.url) || urlMap.get(item.url).lastVisitTime < item.lastVisitTime) {
+          if (!urlMap.has(item.url)) {
+            allHistoryItems.push(item);
+          } else {
+            // Update existing item with more recent visit data
+            const existingIndex = allHistoryItems.findIndex(h => h.url === item.url);
+            if (existingIndex >= 0) {
+              allHistoryItems[existingIndex] = item;
+            }
+          }
+          urlMap.set(item.url, item);
+        }
+      }
+
+      // If we got fewer items than requested, no point continuing
+      if (batchItems.length < batchMaxResults && batchItems.length < 5000) {
+        console.log(`[fetchHistory] Batch ${i + 1} returned significantly fewer items (${batchItems.length}), likely exhausted history in this time range`);
+        break;
+      }
+    } catch (error) {
+      console.error(`[fetchHistory] Batch ${i + 1} error:`, error);
+      // Continue with what we have
+      break;
+    }
+  }
+
+  console.log(`[fetchHistory] Batching complete: ${allHistoryItems.length} unique items collected`);
+  return { historyItems: allHistoryItems.slice(0, targetMaxResults) };
 }
 
 // Query history with WASM processing
@@ -155,9 +228,9 @@ async function queryHistory(params = {}) {
   // We fetch lots from Chrome API, then limit to user preference after processing
   const finalMaxResults = maxResults || userMaxResults;
   
-  // Fetch lots of history from Chrome API (10,000 is Chrome's max)
+  // Fetch lots of history from Chrome API (100,000 to support user preference)
   // We'll filter and limit after WASM processing
-  const { historyItems } = await fetchHistory({ startTime, endTime, maxResults: 10000 });
+  const { historyItems } = await fetchHistory({ startTime, endTime, maxResults: 100000 });
   
   console.log(`[queryHistory] Fetched ${historyItems.length} history items from Chrome API (user maxResults preference: ${userMaxResults})`);
 
