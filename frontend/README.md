@@ -6,18 +6,24 @@ A lightweight Chromium browser extension that enables users to chat with OpenAI'
 
 - 🤖 Chat with OpenAI about your browsing history
 - ⚡ High-performance history processing using Rust/WebAssembly
-- 🔒 Secure local storage of API keys
+- 🔒 No API key required - backend handles AI requests
 - 🎯 Smart history filtering and relevance scoring
 - 💬 Intuitive chat interface
 - ⚙️ Customizable privacy and history settings
+- 🛡️ Built-in rate limiting to prevent abuse
 
 ## Tech Stack
 
+### Frontend (Chrome Extension)
 - **Rust** - Compiled to WebAssembly for high-performance data processing
 - **WebAssembly (WASM)** - Near-native performance in the browser
 - **Dart** - For Chrome extension APIs and UI logic (compiles to JavaScript)
 - **Manifest V3** - Modern Chrome extension architecture
-- **OpenAI API** - Natural language understanding and generation
+
+### Backend (Google Cloud)
+- **Go** - Cloud Function for AI request handling
+- **Google Cloud Functions** - Serverless backend deployment
+- **OpenAI API (GPT-4o-mini)** - Natural language understanding and generation
 
 ## Prerequisites
 
@@ -50,30 +56,41 @@ Before building this extension, ensure you have the following installed:
 
 ```
 chromium-history-extension/
-├── rust/                    # Rust/WASM module
-│   ├── src/
-│   │   └── lib.rs          # WASM entry point and history processing
-│   └── Cargo.toml          # Rust dependencies
-├── dart/                    # Dart source code
-│   ├── lib/
-│   │   ├── background/     # Service worker code
-│   │   ├── popup/          # Popup UI code
-│   │   ├── options/        # Options page code
-│   │   └── shared/         # Shared utilities and services
-│   └── pubspec.yaml        # Dart dependencies
-├── extension/               # Chrome extension files
-│   ├── manifest.json       # Extension manifest (Manifest V3)
-│   ├── popup/              # Popup HTML and CSS
-│   ├── options/            # Options page HTML and CSS
-│   ├── assets/             # Icons and resources
-│   ├── lib/                # Compiled JavaScript (from Dart)
-│   └── wasm/               # Compiled WebAssembly modules
-├── docs/                    # Documentation
-│   ├── prd.md              # Product Requirements Document
-│   └── tasks.md            # Development task list
-├── build.sh                # Build script
-├── Makefile                # Make commands
-└── README.md               # This file
+├── backend/                 # Go Cloud Function backend
+│   ├── main.go             # HTTP handler
+│   ├── openai.go           # OpenAI client
+│   ├── types.go            # Type definitions
+│   ├── rate_limit.go       # Rate limiting
+│   ├── go.mod              # Go dependencies
+│   ├── deploy.sh           # Deployment script
+│   ├── setup.sh            # Setup script
+│   └── README.md           # Backend documentation
+├── chromium-extension/      # Chrome extension
+│   ├── rust/               # Rust/WASM module
+│   │   ├── src/
+│   │   │   └── lib.rs      # WASM entry point and history processing
+│   │   └── Cargo.toml      # Rust dependencies
+│   ├── dart/               # Dart source code
+│   │   ├── lib/
+│   │   │   ├── background/ # Service worker code
+│   │   │   ├── popup/      # Popup UI code
+│   │   │   ├── options/    # Options page code
+│   │   │   └── shared/     # Shared utilities and services
+│   │   └── pubspec.yaml    # Dart dependencies
+│   ├── extension/          # Chrome extension files
+│   │   ├── manifest.json   # Extension manifest (Manifest V3)
+│   │   ├── popup/          # Popup HTML and CSS
+│   │   ├── options/        # Options page HTML and CSS
+│   │   ├── assets/         # Icons and resources
+│   │   ├── lib/            # Compiled JavaScript (from Dart)
+│   │   └── wasm/           # Compiled WebAssembly modules
+│   ├── docs/               # Documentation
+│   │   ├── prd.md          # Product Requirements Document
+│   │   ├── tasks.md        # Development task list
+│   │   └── backend-integration.md  # Backend integration guide
+│   ├── build.sh            # Build script
+│   ├── Makefile            # Make commands
+│   └── README.md           # This file
 ```
 
 ## Building the Extension
@@ -143,21 +160,26 @@ If you prefer to build manually:
 
 ## Configuration
 
-### Getting an OpenAI API Key
+### Backend Setup (Required)
 
-1. Go to [OpenAI Platform](https://platform.openai.com/api-keys)
-2. Sign in or create an account
-3. Navigate to API Keys section
-4. Create a new API key
-5. Copy the key (it starts with `sk-`)
+Before using the extension, you need to deploy the backend Cloud Function:
 
-### Setting up the Extension
+1. See [Backend Deployment Guide](../backend/DEPLOYMENT_GUIDE.md) for complete instructions
+2. Quick start:
+   ```bash
+   cd ../backend
+   ./setup.sh    # Configure GCP project
+   ./deploy.sh   # Deploy Cloud Function
+   ```
+3. Update the extension with your backend URL (see deployment guide)
 
-1. Click the extension icon in your browser toolbar
-2. Click "Set up API key" or navigate to Options
-3. Paste your OpenAI API key
-4. Save the settings
-5. Start chatting about your browsing history!
+### Extension Setup
+
+1. Load the extension in Chrome (see "Loading the Extension" above)
+2. Click the extension icon
+3. Start chatting about your browsing history - no API key needed!
+
+**Note**: The backend handles all AI requests. No user API key is required.
 
 ## Usage
 
@@ -216,8 +238,9 @@ make clean
 2. Query is sent to the service worker
 3. Service worker fetches browser history using Chrome History API
 4. History data is passed to WASM module for filtering and processing
-5. Processed history is sent to OpenAI API with the user's query
-6. OpenAI response is returned to the popup and displayed
+5. Processed history and query are sent to the backend Cloud Function
+6. Backend calls OpenAI API and returns the response
+7. Response is displayed in the popup
 
 ### WebAssembly Module
 
@@ -230,10 +253,12 @@ The Rust/WASM module handles:
 
 ### Security
 
-- API keys are stored in `chrome.storage.local` (encrypted at rest)
+- No user API keys required - backend manages OpenAI credentials
 - All API calls use HTTPS
-- History data is only processed client-side
-- No data is sent to third parties (only to OpenAI via your API key)
+- History data is processed client-side before sending to backend
+- Backend includes IP-based rate limiting (10 req/min)
+- OpenAI API key stored securely in Google Secret Manager
+- No data is stored on backend - requests are stateless
 
 ## Troubleshooting
 
@@ -262,9 +287,10 @@ chmod +x build.sh
 - Check browser console for errors
 
 **API calls failing**
-- Verify your API key is correct
-- Check your OpenAI account has credits
-- Ensure you're not hitting rate limits
+- Verify the backend URL in `extension/background/service_worker.js`
+- Check backend is deployed: see [Backend Deployment Guide](../backend/DEPLOYMENT_GUIDE.md)
+- Test backend directly with curl (see backend README)
+- Check if you're hitting rate limits (10 req/min)
 
 **History not showing**
 - Grant history permission when prompted
@@ -312,11 +338,14 @@ When contributing:
 ## Privacy Policy
 
 This extension:
-- Requires your own OpenAI API key
-- Processes browsing history locally using WebAssembly
-- Only sends data to OpenAI API (using your API key)
-- Does not collect or share data with third parties
-- Stores API keys securely in Chrome's local storage
+- No user API keys required - backend manages credentials
+- Processes browsing history locally using WebAssembly before sending to backend
+- Sends processed history to Google Cloud Function backend
+- Backend forwards requests to OpenAI API
+- Does not store or log browsing history on the backend
+- Backend is stateless - no data persistence
+- All communication encrypted via HTTPS
+- Rate limiting applied per IP address (10 requests/minute)
 
 ## Support
 
