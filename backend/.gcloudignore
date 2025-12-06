@@ -1,0 +1,45 @@
+# Ignore files that shouldn't be uploaded to Cloud Functions
+
+# Git
+.git/
+.gitignore
+
+# Documentation
+*.md
+!README.md
+docs/
+
+# Development files
+.env
+.env.local
+*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build artifacts (if any)
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Test files
+*_test.go
+test/
+tests/
+
+# Coverage
+*.out
+coverage/
+
+# Dependencies (will be installed during build)
+vendor/
+
