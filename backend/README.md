@@ -106,7 +106,7 @@ The deploy script will:
 After deployment, you'll see:
 ```
 Function URL:
-https://chromium-history-chat-xxxxx-uc.a.run.app
+https://chromium-history-chat-pv3keymiya-uc.a.run.app
 ```
 
 Save this URL - you'll need it to configure the frontend.

@@ -56,7 +56,7 @@ This will:
 **Save the Function URL** that is displayed at the end:
 ```
 Function URL:
-https://chromium-history-chat-xxxxx-uc.a.run.app
+https://chromium-history-chat-pv3keymiya-uc.a.run.app
 ```
 
 The URL is also saved to `function_url.txt` for your reference.
@@ -71,7 +71,7 @@ The URL is also saved to `function_url.txt` for your reference.
 
 2. Find this line near the top:
    ```javascript
-   const BACKEND_URL = 'https://chromium-history-chat-xxxxx-uc.a.run.app';
+   const BACKEND_URL = 'https://chromium-history-chat-pv3keymiya-uc.a.run.app';
    ```
 
 3. Replace with your actual function URL from Step 3

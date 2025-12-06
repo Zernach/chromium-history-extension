@@ -8,7 +8,7 @@ echo "========================================="
 
 # Get the project root directory
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-BUILDS_DIR="$PROJECT_ROOT/../chromium-history-extension-builds"
+BUILDS_DIR="$PROJECT_ROOT/../../chromium-history-extension-builds"
 
 # Extract version from manifest.json
 VERSION=$(grep -o '"version": "[^"]*"' "$PROJECT_ROOT/extension/manifest.json" | cut -d'"' -f4)

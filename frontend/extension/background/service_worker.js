@@ -6,6 +6,10 @@ import initWasm from '../wasm/chromium_history_wasm.js';
 
 let wasmModule = null;
 
+// Backend URL - update this after deploying your backend
+// Can also be stored in chrome.storage.local.get(['backend_url']) for user configuration
+const BACKEND_URL = 'https://chromium-history-chat-pv3keymiya-uc.a.run.app'; // Set this to your deployed backend URL, e.g., 'https://your-function-url.run.app'
+
 // Initialize on service worker startup
 self.addEventListener('install', (event) => {
   console.log('Service worker installing...');
@@ -165,7 +169,7 @@ async function queryHistory(params = {}) {
   }
 }
 
-// Chat with history using OpenAI
+// Chat with history using OpenAI or backend
 async function chatWithHistory(params = {}) {
   const {
     message,
@@ -177,10 +181,30 @@ async function chatWithHistory(params = {}) {
     throw new Error('Message is required');
   }
 
-  if (!apiKey) {
-    throw new Error('API key is required');
+  // Check if user provided an API key
+  const userApiKey = apiKey || await getUserApiKey();
+  
+  if (userApiKey) {
+    // User provided API key - call OpenAI directly
+    return await chatWithOpenAI(message, historyContext, userApiKey);
+  } else {
+    // No API key - use backend
+    return await chatWithBackend(message, historyContext);
   }
+}
 
+// Get user's API key from storage
+async function getUserApiKey() {
+  return new Promise((resolve) => {
+    chrome.storage.local.get(['openai_api_key'], (result) => {
+      const key = result.openai_api_key;
+      resolve(key && key.length > 0 ? key : null);
+    });
+  });
+}
+
+// Chat with OpenAI directly using user's API key
+async function chatWithOpenAI(message, historyContext, apiKey) {
   // Prepare history context
   let contextText = historyContext;
   if (Array.isArray(historyContext)) {
@@ -245,6 +269,69 @@ Please answer the user's question based on this browsing history. Be concise and
     return { reply };
   } catch (error) {
     console.error('OpenAI API error:', error);
+    throw error;
+  }
+}
+
+// Chat with backend (no API key required)
+async function chatWithBackend(message, historyContext) {
+  // Get backend URL (from constant or storage)
+  let backendUrl = BACKEND_URL;
+  if (!backendUrl) {
+    // Try to get from storage
+    const result = await new Promise((resolve) => {
+      chrome.storage.local.get(['backend_url'], resolve);
+    });
+    backendUrl = result.backend_url;
+  }
+
+  if (!backendUrl) {
+    throw new Error('Backend URL not configured. Please set your backend URL or provide an OpenAI API key in the options page.');
+  }
+
+  // Convert history context to backend format
+  let history = [];
+  if (Array.isArray(historyContext)) {
+    history = historyContext.map(entry => ({
+      url: entry.url || '',
+      title: entry.title || '',
+      visit_count: Math.floor(entry.visit_count || 0),
+      last_visit_time: Math.floor(entry.last_visit_time || 0)
+    }));
+  }
+
+  try {
+    const response = await fetch(backendUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        message: message,
+        history: history
+      })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      if (response.status === 429) {
+        throw new Error('Rate limit exceeded. Please try again later.');
+      } else if (response.status === 400) {
+        throw new Error(errorData.error || 'Invalid request. Please check your input.');
+      } else {
+        throw new Error(errorData.error || `Backend error: ${response.status} - ${response.statusText}`);
+      }
+    }
+
+    const data = await response.json();
+    if (data.error) {
+      throw new Error(data.error);
+    }
+
+    const reply = data.reply || 'No response from backend';
+    return { reply };
+  } catch (error) {
+    console.error('Backend API error:', error);
     throw error;
   }
 }

@@ -14,9 +14,9 @@
 
         <main>
             <section class="settings-section">
-                <h2>OpenAI API Configuration</h2>
+                <h2>OpenAI API Configuration (Optional)</h2>
                 <p class="description">
-                    This extension requires your own OpenAI API key to function. Your API key is stored locally and never shared.
+                    You can optionally provide your own OpenAI API key to keep your browsing history private. If you don't provide one, the extension will use our backend and OpenAI API key instead. Your API key is stored locally and never shared.
                 </p>
 
                 <div class="form-group">
@@ -37,8 +37,8 @@
                 </div>
 
                 <div class="info-box">
-                    <strong>Don't have an API key?</strong>
-                    <p>Get one from <a href="https://platform.openai.com/api-keys" target="_blank">OpenAI Platform</a></p>
+                    <strong>No API key needed!</strong>
+                    <p>If you don't provide an API key, the extension will automatically use our own backend service. You can get your own API key from <a href="https://platform.openai.com/api-keys" target="_blank">OpenAI Platform</a> if you prefer to use your own.</p>
                 </div>
             </section>
 
@@ -94,8 +94,7 @@
                     All data is processed locally using WebAssembly for performance and privacy.
                 </p>
                 <p class="description">
-                    <strong>Privacy Note:</strong> Your browsing history is only sent to OpenAI's API using your API key.
-                    No data is shared with third parties.
+                    <strong>Privacy Note:</strong> If you provide your own API key, your browsing history is sent directly to OpenAI's API. If you use the backend service, your history is sent to the backend which then forwards it to OpenAI. No data is shared with third parties beyond OpenAI.
                 </p>
             </section>
         </main>
