@@ -1,13 +1,20 @@
 {
   "manifest_version": 3,
   "name": "Chromium History Chat",
-  "version": "0.1.2",
+  "version": "0.1.9",
   "description": "Chat with OpenAI about your browsing history",
   "author": "Chromium History Extension Team",
 
   "permissions": [
     "history",
     "storage"
+  ],
+
+  "host_permissions": [
+    "https://api.archlife.org/*",
+    "wss://api.archlife.org/*",
+    "http://localhost:3000/*",
+    "ws://localhost:3000/*"
   ],
 
   "action": {
@@ -30,16 +37,5 @@
     "type": "module"
   },
 
-  "options_page": "options/options.html",
-
-  "content_security_policy": {
-    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'"
-  },
-
-  "web_accessible_resources": [
-    {
-      "resources": ["wasm/*.wasm"],
-      "matches": ["<all_urls>"]
-    }
-  ]
+  "options_page": "options/options.html"
 }

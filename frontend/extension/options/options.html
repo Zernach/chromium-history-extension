@@ -14,9 +14,9 @@
 
         <main>
             <section class="settings-section">
-                <h2>OpenAI API Configuration (Optional)</h2>
+                <h2>AI Access (Backend Managed)</h2>
                 <p class="description">
-                    You can optionally provide your own OpenAI API key to keep your browsing history private. If you don't provide one, the extension will use our backend and OpenAI API key instead. Your API key is stored locally and never shared.
+                    Browsing history is now processed on the backend. API keys are no longer required or used; all requests flow through the managed backend service.
                 </p>
 
                 <div class="form-group">
@@ -24,21 +24,22 @@
                     <input
                         type="password"
                         id="api-key-input"
-                        placeholder="sk-..."
+                        placeholder="API keys are disabled"
                         autocomplete="off"
+                        disabled
                     />
                     <div id="api-key-status" class="status-message"></div>
                 </div>
 
                 <div class="button-group">
-                    <button id="save-api-key-button" class="btn btn-primary">Save API Key</button>
-                    <button id="clear-api-key-button" class="btn btn-secondary">Clear API Key</button>
-                    <button id="toggle-visibility-button" class="btn btn-secondary">Show/Hide</button>
+                    <button id="save-api-key-button" class="btn btn-primary" disabled>Save API Key</button>
+                    <button id="clear-api-key-button" class="btn btn-secondary" disabled>Clear API Key</button>
+                    <button id="toggle-visibility-button" class="btn btn-secondary" disabled>Show/Hide</button>
                 </div>
 
                 <div class="info-box">
-                    <strong>No API key needed!</strong>
-                    <p>If you don't provide an API key, the extension will automatically use our own backend service. You can get your own API key from <a href="https://platform.openai.com/api-keys" target="_blank">OpenAI Platform</a> if you prefer to use your own.</p>
+                    <strong>Backend in use</strong>
+                    <p>Your browsing history is sent to the backend for processing before OpenAI is called. API key inputs are disabled because they are no longer used.</p>
                 </div>
             </section>
 
@@ -92,10 +93,10 @@
                 </p>
                 <p class="description">
                     This extension allows you to chat with OpenAI about your browsing history.
-                    All data is processed locally using WebAssembly for performance and privacy.
+                    Data is now transmitted to the backend for processing and filtering before reaching OpenAI.
                 </p>
                 <p class="description">
-                    <strong>Privacy Note:</strong> If you provide your own API key, your browsing history is sent directly to OpenAI's API. If you use the backend service, your history is sent to the backend which then forwards it to OpenAI. No data is shared with third parties beyond OpenAI.
+                    <strong>Privacy Note:</strong> Browsing history is sent to the backend service, which then forwards relevant context to OpenAI. No third parties beyond the managed backend and OpenAI receive your data.
                 </p>
             </section>
         </main>

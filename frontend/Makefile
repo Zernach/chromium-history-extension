@@ -29,6 +29,7 @@ sync-version:
 build-rust:
 	@echo "Building Rust to WebAssembly..."
 	cd rust && wasm-pack build --target web --out-dir ../extension/wasm --no-typescript
+	@echo "WASM memory configuration is set in rust/.cargo/config.toml (64MB initial, 128MB max)"
 	@echo "Rust/WASM build complete!"
 
 build-dart:

@@ -4,6 +4,32 @@ use std::collections::HashMap;
 
 // Data structures for browser history
 
+// Internal struct for serde deserialization - no wasm_bindgen attributes
+// This avoids conflicts between wasm_bindgen and serde_wasm_bindgen
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct HistoryEntryInput {
+    #[serde(default)]
+    url: String,
+    #[serde(default)]
+    title: String,
+    #[serde(default)]
+    visit_count: u32,
+    #[serde(default)]
+    last_visit_time: f64,
+}
+
+impl HistoryEntryInput {
+    fn into_history_entry(self) -> HistoryEntry {
+        HistoryEntry {
+            url: self.url,
+            title: self.title,
+            visit_count: self.visit_count,
+            last_visit_time: self.last_visit_time,
+        }
+    }
+}
+
+// Public struct for wasm_bindgen export
 #[wasm_bindgen(getter_with_clone)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HistoryEntry {
@@ -14,7 +40,7 @@ pub struct HistoryEntry {
     #[wasm_bindgen(readonly)]
     pub visit_count: u32,
     #[wasm_bindgen(readonly)]
-    pub last_visit_time: f64, // Chrome timestamp (microseconds since epoch)
+    pub last_visit_time: f64, // Chrome timestamp (milliseconds since epoch)
 }
 
 #[wasm_bindgen]
@@ -28,6 +54,15 @@ impl HistoryEntry {
             last_visit_time,
         }
     }
+}
+
+// Helper function to safely deserialize history entries from JavaScript
+// Uses the simpler HistoryEntryInput struct to avoid wasm_bindgen conflicts
+fn deserialize_entries(entries: JsValue) -> Result<Vec<HistoryEntry>, String> {
+    let inputs: Vec<HistoryEntryInput> = serde_wasm_bindgen::from_value(entries)
+        .map_err(|e| format!("Failed to deserialize entries: {}", e))?;
+    
+    Ok(inputs.into_iter().map(|i| i.into_history_entry()).collect())
 }
 
 #[wasm_bindgen(getter_with_clone)]
@@ -57,7 +92,15 @@ impl HistoryQuery {
 // Initialize the WASM module
 #[wasm_bindgen(start)]
 pub fn init() {
-    // Optional: Setup panic hook for better error messages
+    // Setup panic hook for better error messages in the browser console
+    #[cfg(feature = "console_error_panic_hook")]
+    console_error_panic_hook::set_once();
+
+    // Setup console logging (optional but helpful for debugging)
+    #[cfg(debug_assertions)]
+    {
+        // In debug mode, we could initialize console logging here
+    }
 }
 
 // Stop words to filter out (common words with little meaning)
@@ -147,8 +190,8 @@ pub fn filter_history_by_date_range(
     start_time: f64,
     end_time: f64,
 ) -> Result<JsValue, JsValue> {
-    let entries: Vec<HistoryEntry> = serde_wasm_bindgen::from_value(entries)
-        .map_err(|e| JsValue::from_str(&format!("Failed to parse entries: {}", e)))?;
+    let entries = deserialize_entries(entries)
+        .map_err(|e| JsValue::from_str(&e))?;
 
     let filtered: Vec<HistoryEntry> = entries
         .into_iter()
@@ -164,8 +207,8 @@ pub fn filter_history_by_keywords(
     entries: JsValue,
     keywords: Vec<String>,
 ) -> Result<JsValue, JsValue> {
-    let entries: Vec<HistoryEntry> = serde_wasm_bindgen::from_value(entries)
-        .map_err(|e| JsValue::from_str(&format!("Failed to parse entries: {}", e)))?;
+    let entries = deserialize_entries(entries)
+        .map_err(|e| JsValue::from_str(&e))?;
 
     let keywords_lower: Vec<String> = keywords.iter().map(|k| k.to_lowercase()).collect();
 
@@ -186,8 +229,8 @@ pub fn filter_history_by_keywords(
 
 #[wasm_bindgen]
 pub fn sort_history_by_relevance(entries: JsValue) -> Result<JsValue, JsValue> {
-    let mut entries: Vec<HistoryEntry> = serde_wasm_bindgen::from_value(entries)
-        .map_err(|e| JsValue::from_str(&format!("Failed to parse entries: {}", e)))?;
+    let mut entries = deserialize_entries(entries)
+        .map_err(|e| JsValue::from_str(&e))?;
 
     // Sort by visit count (descending) and then by last visit time (descending)
     entries.sort_by(|a, b| {
@@ -207,8 +250,8 @@ pub fn sort_by_relevance_with_keywords(
     keywords: Vec<String>,
     current_time: f64,
 ) -> Result<JsValue, JsValue> {
-    let entries: Vec<HistoryEntry> = serde_wasm_bindgen::from_value(entries)
-        .map_err(|e| JsValue::from_str(&format!("Failed to parse entries: {}", e)))?;
+    let entries = deserialize_entries(entries)
+        .map_err(|e| JsValue::from_str(&e))?;
 
     let keywords_lower: Vec<String> = keywords.iter().map(|k| k.to_lowercase()).collect();
 
@@ -238,8 +281,8 @@ pub fn sort_by_relevance_with_keywords(
 
 #[wasm_bindgen]
 pub fn limit_history_results(entries: JsValue, max_count: usize) -> Result<JsValue, JsValue> {
-    let entries: Vec<HistoryEntry> = serde_wasm_bindgen::from_value(entries)
-        .map_err(|e| JsValue::from_str(&format!("Failed to parse entries: {}", e)))?;
+    let entries = deserialize_entries(entries)
+        .map_err(|e| JsValue::from_str(&e))?;
 
     let limited: Vec<HistoryEntry> = entries.into_iter().take(max_count).collect();
 
@@ -249,8 +292,8 @@ pub fn limit_history_results(entries: JsValue, max_count: usize) -> Result<JsVal
 
 #[wasm_bindgen]
 pub fn format_history_for_llm(entries: JsValue, max_chars: usize) -> Result<String, JsValue> {
-    let entries: Vec<HistoryEntry> = serde_wasm_bindgen::from_value(entries)
-        .map_err(|e| JsValue::from_str(&format!("Failed to parse entries: {}", e)))?;
+    let entries = deserialize_entries(entries)
+        .map_err(|e| JsValue::from_str(&e))?;
 
     let mut result = String::new();
     let mut char_count = 0;
@@ -289,8 +332,8 @@ pub fn format_history_for_llm(entries: JsValue, max_chars: usize) -> Result<Stri
 // Analyze domain patterns in history
 #[wasm_bindgen]
 pub fn analyze_domain_patterns(entries: JsValue) -> Result<JsValue, JsValue> {
-    let entries: Vec<HistoryEntry> = serde_wasm_bindgen::from_value(entries)
-        .map_err(|e| JsValue::from_str(&format!("Failed to parse entries: {}", e)))?;
+    let entries = deserialize_entries(entries)
+        .map_err(|e| JsValue::from_str(&e))?;
 
     let mut domain_stats: HashMap<String, (u32, u32)> = HashMap::new();
 
@@ -327,7 +370,47 @@ pub fn analyze_domain_patterns(entries: JsValue) -> Result<JsValue, JsValue> {
         .map_err(|e| JsValue::from_str(&format!("Failed to serialize result: {}", e)))
 }
 
+// Internal helper: sort entries by relevance (visit count, then recency)
+fn sort_entries_by_relevance_internal(mut entries: Vec<HistoryEntry>) -> Vec<HistoryEntry> {
+    entries.sort_by(|a, b| {
+        b.visit_count
+            .cmp(&a.visit_count)
+            .then_with(|| b.last_visit_time.partial_cmp(&a.last_visit_time).unwrap_or(std::cmp::Ordering::Equal))
+    });
+    entries
+}
+
+// Internal helper: sort entries by relevance with keywords
+fn sort_entries_by_relevance_with_keywords_internal(
+    entries: Vec<HistoryEntry>,
+    keywords: &[String],
+    current_time: f64,
+) -> Vec<HistoryEntry> {
+    let keywords_lower: Vec<String> = keywords.iter().map(|k| k.to_lowercase()).collect();
+    
+    // Calculate scores for all entries
+    let mut scored_entries: Vec<(HistoryEntry, f64)> = entries
+        .into_iter()
+        .map(|entry| {
+            let score = calculate_relevance_score(&entry, &keywords_lower, current_time);
+            (entry, score)
+        })
+        .collect();
+    
+    // Sort by score (descending)
+    scored_entries.sort_by(|a, b| {
+        b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal)
+    });
+    
+    // Extract entries
+    scored_entries
+        .into_iter()
+        .map(|(entry, _)| entry)
+        .collect()
+}
+
 // Combined query function: filter, score, and sort
+// OPTIMIZED: Avoids unnecessary serializations/deserializations to prevent memory issues
 #[wasm_bindgen]
 pub fn find_relevant_history(
     entries: JsValue,
@@ -335,36 +418,106 @@ pub fn find_relevant_history(
     max_results: usize,
     current_time: f64,
 ) -> Result<JsValue, JsValue> {
-    let entries: Vec<HistoryEntry> = serde_wasm_bindgen::from_value(entries)
-        .map_err(|e| JsValue::from_str(&format!("Failed to parse entries: {}", e)))?;
+    // Add safety check for query string length
+    if query.len() > 1000 {
+        return Err(JsValue::from_str("Query string too long (max 1000 characters)"));
+    }
+    
+    // Use safe deserialization helper to avoid wasm_bindgen/serde conflicts
+    let mut entries: Vec<HistoryEntry> = match deserialize_entries(entries) {
+        Ok(parsed) => parsed,
+        Err(e) => {
+            return Err(JsValue::from_str(&format!(
+                "{}. Ensure entries have: url (string), title (string), visit_count (integer), last_visit_time (number).",
+                e
+            )));
+        }
+    };
+    
+    // Validate entries before processing to catch data issues early
+    // Filter out any invalid entries that might cause memory access issues
+    entries.retain(|entry| {
+        // Ensure all required fields are valid
+        !entry.url.is_empty() 
+            && entry.last_visit_time > 0.0 
+            && entry.last_visit_time.is_finite()
+            && entry.url.len() < 10000 // Reasonable URL length limit
+            && entry.title.len() < 10000 // Reasonable title length limit
+    });
+    
+    // Safety check: reject if we have too many entries (should be filtered by JS first)
+    // Reduced limit to match conservative JavaScript limits
+    const MAX_ENTRIES: usize = 2000;
+    if entries.len() > MAX_ENTRIES {
+        // Limit entries to prevent memory issues (take most recent)
+        entries.sort_by(|a, b| {
+            b.last_visit_time.partial_cmp(&a.last_visit_time)
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
+        entries.truncate(MAX_ENTRIES);
+        // Continue processing with limited entries rather than failing
+    }
+    
+    // If we have no valid entries after validation, return empty result
+    if entries.is_empty() {
+        return Ok(serde_wasm_bindgen::to_value(&Vec::<HistoryEntry>::new())
+            .map_err(|e| JsValue::from_str(&format!("Failed to serialize empty result: {}", e)))?);
+    }
 
     // Extract keywords from query
     let keywords = extract_keywords(query);
 
-    if keywords.is_empty() {
+    let result: Vec<HistoryEntry> = if keywords.is_empty() {
         // No keywords, just sort by recency and visit count
-        let sorted_entries = serde_wasm_bindgen::to_value(&entries)?;
-        return sort_history_by_relevance(sorted_entries);
-    }
-
-    // Filter entries that match keywords
-    let filtered: Vec<HistoryEntry> = entries
-        .into_iter()
-        .filter(|entry| {
-            let url_lower = entry.url.to_lowercase();
-            let title_lower = entry.title.to_lowercase();
-            keywords.iter().any(|keyword| {
-                url_lower.contains(keyword) || title_lower.contains(keyword)
+        // Use internal function to avoid serialization
+        let sorted = sort_entries_by_relevance_internal(entries);
+        // Limit results
+        sorted.into_iter().take(max_results).collect()
+    } else {
+        // Filter entries that match keywords
+        // Note: Filtering first before scoring reduces memory usage
+        let filtered: Vec<HistoryEntry> = entries
+            .into_iter()
+            .filter(|entry| {
+                // Validate entry data to prevent memory access issues
+                if entry.url.is_empty() || entry.last_visit_time <= 0.0 {
+                    return false;
+                }
+                
+                let url_lower = entry.url.to_lowercase();
+                let title_lower = entry.title.to_lowercase();
+                keywords.iter().any(|keyword| {
+                    url_lower.contains(keyword) || title_lower.contains(keyword)
+                })
             })
-        })
-        .collect();
+            .collect();
 
-    // Score and sort
-    let scored_entries = serde_wasm_bindgen::to_value(&filtered)?;
-    let sorted = sort_by_relevance_with_keywords(scored_entries, keywords, current_time)?;
+        // If filtering resulted in too many results, limit before scoring for memory safety
+        let filtered_for_scoring = if filtered.len() > 10000 {
+            // Sort by recency first and take top 10000
+            let mut temp = filtered;
+            temp.sort_by(|a, b| {
+                b.last_visit_time.partial_cmp(&a.last_visit_time).unwrap_or(std::cmp::Ordering::Equal)
+            });
+            temp.into_iter().take(10000).collect()
+        } else {
+            filtered
+        };
 
-    // Limit results
-    limit_history_results(sorted, max_results)
+        // Score and sort using internal function to avoid serialization
+        let sorted = sort_entries_by_relevance_with_keywords_internal(
+            filtered_for_scoring,
+            &keywords,
+            current_time,
+        );
+        
+        // Limit results
+        sorted.into_iter().take(max_results).collect()
+    };
+
+    // Only serialize once at the end
+    serde_wasm_bindgen::to_value(&result)
+        .map_err(|e| JsValue::from_str(&format!("Failed to serialize result: {}", e)))
 }
 
 #[cfg(test)]
