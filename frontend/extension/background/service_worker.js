@@ -564,6 +564,8 @@ async function chatWithBackend(message, conversationMessages = [], maxResultsOve
     let batchesToSend = [];
     let currentBatchIndex = 0;
     let totalBatchesAcknowledged = 0;
+    let historyUploadCompleteSent = false;
+    let historyUploadCompleteAcknowledged = false;
     let chatMessageSent = false;
 
     // Prepare batches
@@ -671,21 +673,19 @@ async function chatWithBackend(message, conversationMessages = [], maxResultsOve
               reject(new Error(`WebSocket not ready (state: ${ws.readyState})`));
             }
           } else {
-            // No history to send, send chat message immediately
+            // No history to send, send history_upload_complete immediately
             console.warn(`[chatWithBackend] WARNING: No history batches to send! History length: ${history.length}, Batches prepared: ${batchesToSend.length}`);
             console.warn(`[chatWithBackend] This might indicate that history fetching/filtering resulted in 0 entries`);
-            if (!chatMessageSent) {
-              chatMessageSent = true;
-              const chatMessage = {
-                type: 'chat',
-                message: String(message || '').trim(),
-                messages: conversationMessages
+            if (!historyUploadCompleteSent) {
+              historyUploadCompleteSent = true;
+              const uploadCompleteMessage = {
+                type: 'history_upload_complete'
               };
-              console.log(`[chatWithBackend] No history batches, sending chat message immediately`);
+              console.log(`[chatWithBackend] No history batches, sending history_upload_complete immediately`);
               if (ws.readyState === WebSocket.OPEN) {
-                ws.send(JSON.stringify(chatMessage));
+                ws.send(JSON.stringify(uploadCompleteMessage));
               } else {
-                console.error(`[chatWithBackend] ERROR: WebSocket not OPEN when trying to send chat message! readyState: ${ws.readyState}`);
+                console.error(`[chatWithBackend] ERROR: WebSocket not OPEN when trying to send history_upload_complete! readyState: ${ws.readyState}`);
                 reject(new Error(`WebSocket not ready (state: ${ws.readyState})`));
               }
             }
@@ -717,19 +717,39 @@ async function chatWithBackend(message, conversationMessages = [], maxResultsOve
             console.log(`[chatWithBackend] All batches have been sent, waiting for acknowledgments...`);
           }
           
-          // Send chat message only after ALL batches are both sent AND acknowledged
-          if (allBatchesSent && allBatchesAcknowledged && !chatMessageSent) {
+          // Send history_upload_complete only after ALL batches are both sent AND acknowledged
+          if (allBatchesSent && allBatchesAcknowledged && !historyUploadCompleteSent) {
+            historyUploadCompleteSent = true;
+            const uploadCompleteMessage = {
+              type: 'history_upload_complete'
+            };
+            console.log(`[chatWithBackend] ✓ All ${batchesToSend.length} batches sent and acknowledged!`);
+            console.log(`[chatWithBackend] Sending history_upload_complete signal...`);
+            ws.send(JSON.stringify(uploadCompleteMessage));
+          }
+        } else if (data.type === 'history_upload_complete_ack') {
+          // History upload complete acknowledged, now we can send the chat message
+          console.log(`[chatWithBackend] ✓ History upload complete acknowledged:`);
+          console.log(`[chatWithBackend]   - Total history entries: ${data.totalHistoryEntries}`);
+          console.log(`[chatWithBackend]   - Total history received: ${data.totalHistoryReceived}`);
+          historyUploadCompleteAcknowledged = true;
+          
+          // Now send the chat message
+          if (!chatMessageSent) {
             chatMessageSent = true;
             const chatMessage = {
               type: 'chat',
               message: String(message || '').trim(),
               messages: conversationMessages
             };
-            console.log(`[chatWithBackend] ✓ All ${batchesToSend.length} batches sent and acknowledged!`);
             console.log(`[chatWithBackend] Sending chat message now...`);
             console.log(`[chatWithBackend] Chat message:`, chatMessage);
             ws.send(JSON.stringify(chatMessage));
           }
+        } else if (data.type === 'chat_queued') {
+          // Chat request was queued because history upload wasn't complete
+          console.log(`[chatWithBackend] Chat request queued: ${data.message}`);
+          console.log(`[chatWithBackend] Waiting for history upload to complete...`);
         } else if (data.reply) {
           // Chat response received
           console.log('[chatWithBackend] Received chat reply');
