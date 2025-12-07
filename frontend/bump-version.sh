@@ -72,3 +72,4 @@ bump_version() {
 # Run bump_version with provided argument
 bump_version "$@"
 
+
