@@ -242,15 +242,80 @@ Expected output: `{ success: true, result: [...] }`
    });
    ```
 
+## Testing Settings Integration (December 2025 Update)
+
+### Test 4.1: Settings View Navigation
+
+1. Click the extension icon to open the popup
+2. Click the gear icon in the header (top-right)
+3. Verify:
+   - Chat view disappears
+   - Settings view appears
+   - Back button appears (top-left, replacing New Chat button)
+   - Header title changes to "Settings"
+   - Settings button (gear) is hidden
+
+### Test 4.2: Settings View Content
+
+In the settings view, verify all sections are present:
+1. **AI Access section**: Shows "Backend in use" message
+2. **Privacy & History Settings**: 
+   - History Date Range input (default: 5000 days)
+   - Maximum Results input (default: 100000)
+   - "Save Preferences" button
+3. **Chat History section**: "Clear Chat History" button
+4. **About section**: Shows extension version
+
+### Test 4.3: Return to Chat View
+
+1. From settings view, click the back button (top-left)
+2. Verify:
+   - Settings view disappears
+   - Chat view reappears
+   - Back button disappears
+   - New Chat button reappears
+   - Settings button (gear) reappears
+   - Header title changes back to "Chat with History"
+   - Previous chat messages are still visible
+
+### Test 4.4: Settings Functionality
+
+1. Navigate to settings view
+2. Change "History Date Range" to 1000
+3. Change "Maximum Results" to 50000
+4. Click "Save Preferences"
+5. Verify success message appears
+6. Go back to chat and trigger a new query
+7. Verify new preferences are applied
+
+### Test 4.5: Clear Chat from Settings
+
+1. Have some chat history in the chat view
+2. Navigate to settings view
+3. Click "Clear Chat History"
+4. Confirm the dialog
+5. Verify success message appears
+6. Go back to chat view
+7. Verify all previous messages are cleared
+
+### Test 4.6: Settings Persistence
+
+1. Configure preferences in settings
+2. Close the popup completely
+3. Reopen the popup
+4. Navigate to settings
+5. Verify saved preferences are still loaded
+
 ## Feature Testing Checklist
 
 - [ ] Extension loads without errors
 - [ ] Icons display correctly
 - [ ] Popup opens and displays UI
-- [ ] Options page is accessible
-- [ ] API key can be saved
-- [ ] API key can be cleared
-- [ ] API key is masked in UI
+- [ ] Settings view accessible via gear icon
+- [ ] Back button returns to chat view
+- [ ] Header title changes appropriately
+- [ ] Settings form elements display correctly
+- [ ] Settings scrollable if content is tall
 - [ ] Chat messages display correctly
 - [ ] User messages are stored
 - [ ] AI responses appear
@@ -260,10 +325,12 @@ Expected output: `{ success: true, result: [...] }`
 - [ ] History can be fetched
 - [ ] WASM module loads
 - [ ] WASM filtering works
-- [ ] OpenAI API integration works
+- [ ] Backend API integration works
 - [ ] Chat history persists across popup opens
-- [ ] Chat history can be cleared
-- [ ] Preferences can be saved
+- [ ] Chat history persists across view switches
+- [ ] Chat history can be cleared from settings
+- [ ] Preferences can be saved from settings
+- [ ] Extension version displays in settings
 - [ ] Extension works after browser restart
 
 ## Edge Cases to Test

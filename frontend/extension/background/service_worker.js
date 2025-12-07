@@ -400,7 +400,7 @@ async function queryHistory(params = {}) {
   return { entries };
 }
 
-// Chat with history using the backend
+// Chat with history - uses backend or direct OpenAI based on API key presence
 async function chatWithHistory(params = {}) {
   const {
     message,
@@ -412,8 +412,118 @@ async function chatWithHistory(params = {}) {
     throw new Error('Message is required');
   }
 
-  // Always use the backend to process history and generate replies
-  return await chatWithBackend(message, conversationMessages, maxResults);
+  // Check if user has provided their own API key
+  const apiKeyResult = await chrome.storage.local.get(['openai_api_key']);
+  const hasApiKey = !!(apiKeyResult.openai_api_key && apiKeyResult.openai_api_key.length > 0);
+
+  if (hasApiKey) {
+    console.log('[chatWithHistory] Using Direct OpenAI mode (user provided API key)');
+    return await chatWithOpenAI(message, conversationMessages, apiKeyResult.openai_api_key, maxResults);
+  } else {
+    console.log('[chatWithHistory] Using Backend mode (no API key provided)');
+    return await chatWithBackend(message, conversationMessages, maxResults);
+  }
+}
+
+// Chat with OpenAI directly using user's API key
+async function chatWithOpenAI(message, conversationMessages = [], apiKey, maxResultsOverride) {
+  console.log('[chatWithOpenAI] Starting direct OpenAI call with user API key');
+  
+  // Fetch browsing history
+  const preferences = await getUserPreferences();
+  const historyRangeDays = preferences.historyRangeDays || 365;
+  const preferredMaxResults = preferences.maxResults || 100000;
+  const maxResults = Math.min(maxResultsOverride || preferredMaxResults, 100000);
+
+  console.log('[chatWithOpenAI] Fetching history...', { historyRangeDays, maxResults });
+
+  let historyItems;
+  try {
+    const result = await fetchHistory({ maxResults });
+    historyItems = result.historyItems;
+    console.log('[chatWithOpenAI] Fetched', historyItems?.length || 0, 'history items');
+  } catch (fetchError) {
+    console.error('[chatWithOpenAI] Error fetching history:', fetchError);
+    historyItems = [];
+  }
+
+  // Convert to simplified format
+  const history = historyItems
+    .map(item => ({
+      url: item.url,
+      title: item.title || '',
+      visit_count: item.visitCount || 0,
+      last_visit_time: item.lastVisitTime
+    }))
+    .filter(entry => entry.url && entry.last_visit_time);
+
+  console.log('[chatWithOpenAI] Processed', history.length, 'valid history entries');
+
+  // Build messages for OpenAI
+  const messages = [
+    {
+      role: 'system',
+      content: `You are a helpful assistant that analyzes browsing history and answers questions about it. The user has provided ${history.length} browsing history entries. Use this information to answer their questions accurately and helpfully.`
+    }
+  ];
+
+  // Add conversation history if available
+  if (conversationMessages && conversationMessages.length > 0) {
+    messages.push(...conversationMessages);
+  } else {
+    // Add the current message if no conversation history
+    messages.push({
+      role: 'user',
+      content: message
+    });
+  }
+
+  // Add history data to the last user message
+  const lastMessage = messages[messages.length - 1];
+  if (lastMessage.role === 'user' && history.length > 0) {
+    // Create a condensed history summary to avoid token limits
+    const historyText = history.slice(0, 1000).map(entry => 
+      `${entry.title || 'Untitled'} - ${entry.url}`
+    ).join('\n');
+    
+    lastMessage.content = `${lastMessage.content}\n\nBrowsing History:\n${historyText}`;
+  }
+
+  // Call OpenAI API
+  try {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages: messages,
+        temperature: 0.7,
+        max_tokens: 2000
+      })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error?.message || `OpenAI API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    const reply = data.choices[0]?.message?.content;
+
+    if (!reply) {
+      throw new Error('No response from OpenAI');
+    }
+
+    console.log('[chatWithOpenAI] Successfully received response from OpenAI');
+    return { reply };
+
+  } catch (error) {
+    console.error('[chatWithOpenAI] Error calling OpenAI:', error);
+    throw new Error(`Failed to call OpenAI: ${error.message}`);
+  }
 }
 
 // Chat with backend using WebSocket (no API key required)

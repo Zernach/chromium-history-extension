@@ -69,9 +69,14 @@ main {
     color: #e0e0e0;
 }
 
+.input-wrapper {
+    position: relative;
+    width: 100%;
+}
+
 .form-group input {
     width: 100%;
-    padding: 10px 12px;
+    padding: 10px 42px 10px 12px;
     border: 1px solid #3a3a3a;
     border-radius: 4px;
     font-size: 14px;
@@ -84,6 +89,35 @@ main {
 .form-group input:focus {
     outline: none;
     border-color: #2563eb;
+}
+
+.eye-icon {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: #999;
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s;
+    z-index: 1;
+}
+
+.eye-icon:hover {
+    color: #e0e0e0;
+}
+
+.eye-icon:active {
+    color: #2563eb;
+}
+
+.eye-icon svg {
+    display: block;
 }
 
 .help-text {

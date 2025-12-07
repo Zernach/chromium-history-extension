@@ -14,7 +14,12 @@
                     <path d="M12 5v14M5 12h14"></path>
                 </svg>
             </button>
-            <h1>Chat with History</h1>
+            <button id="back-button" class="header-button hidden" title="Back to Chat" aria-label="Back to Chat">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M19 12H5M12 19l-7-7 7-7"></path>
+                </svg>
+            </button>
+            <h1 id="header-title">Chat with History</h1>
             <button id="settings-button" class="header-button" title="Settings" aria-label="Open Settings">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"></path>
@@ -23,31 +28,116 @@
             </button>
         </div>
 
-        <!-- <div id="api-key-warning" class="warning hidden">
-            <p>⚠️ No API key set. <a href="#" id="open-options">Set your own API key (optional)</a></p>
-        </div> -->
+        <!-- Chat View -->
+        <div id="chat-view" class="view-container">
+            <div id="chat-container">
+                <div id="messages"></div>
+            </div>
 
-        <div id="chat-container">
-            <div id="messages"></div>
+            <div id="input-container">
+                <textarea
+                    id="user-input"
+                    placeholder="Ask about your browsing history..."
+                    rows="2"
+                ></textarea>
+                <button id="send-button" disabled>Send</button>
+            </div>
+
+            <div id="loading-indicator" class="hidden">
+                <div class="spinner"></div>
+                <span>Thinking...</span>
+            </div>
+
+            <div id="error-container" class="hidden"></div>
         </div>
 
-        <div id="input-container">
-            <textarea
-                id="user-input"
-                placeholder="Ask about your browsing history..."
-                rows="2"
-            ></textarea>
-            <button id="send-button" disabled>Send</button>
-        </div>
+        <!-- Settings View -->
+        <div id="settings-view" class="view-container hidden">
+            <div id="settings-content">
+                <section class="settings-section">
+                    <h2>AI Access Configuration</h2>
+                    <p class="description">
+                        Choose how to process your browsing history: use the managed backend (no API key required) or provide your own OpenAI API key for direct access.
+                    </p>
 
-        <div id="loading-indicator" class="hidden">
-            <div class="spinner"></div>
-            <span>Thinking...</span>
-        </div>
+                    <div class="form-group">
+                        <label for="api-key-input">OpenAI API Key (Optional)</label>
+                        <div class="input-wrapper">
+                            <input
+                                type="password"
+                                id="api-key-input"
+                                placeholder="Enter your OpenAI API key or leave empty to use backend"
+                                autocomplete="off"
+                            />
+                            <button id="toggle-visibility-button" class="eye-icon" type="button" aria-label="Toggle password visibility">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                </svg>
+                            </button>
+                        </div>
+                        <div id="api-key-status" class="status-message"></div>
+                    </div>
 
-        <div id="error-container" class="hidden"></div>
+                    <div class="button-group">
+                        <button id="save-api-key-button" class="btn btn-primary">Save API Key</button>
+                        <button id="clear-api-key-button" class="btn btn-secondary">Clear API Key</button>
+                    </div>
+
+                    <div class="info-box">
+                        <strong>Two Modes Available:</strong>
+                        <ul style="margin: 0.5rem 0; padding-left: 1.5rem;">
+                            <li><strong>Backend Mode (Default):</strong> Leave API key empty. Your browsing history is sent to the managed backend for processing.</li>
+                            <li><strong>Direct OpenAI Mode:</strong> Provide your own API key. Calls OpenAI directly from the extension with your key.</li>
+                        </ul>
+                    </div>
+                </section>
+
+                <section class="settings-section">
+                    <h2>Privacy & History Settings</h2>
+
+                    <div class="form-group">
+                        <label for="history-range">History Date Range (days)</label>
+                        <input
+                            type="number"
+                            id="history-range"
+                            value="5000"
+                            min="1"
+                            max="10000"
+                        />
+                        <p class="help-text">Include history from the last N days (up to 10,000)</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="max-results">Maximum Results</label>
+                        <input
+                            type="number"
+                            id="max-results"
+                            value="100000"
+                            min="10"
+                            max="100000"
+                            step="1000"
+                        />
+                        <p class="help-text">Max history entries to send (up to 100,000)</p>
+                    </div>
+
+                    <button id="save-preferences-button" class="btn btn-primary">Save Preferences</button>
+                    <div id="preferences-status" class="status-message"></div>
+                </section>
+
+                <section class="settings-section">
+                    <h2>About</h2>
+                    <p class="description">
+                        <strong>Chromium History Chat Extension</strong><br>
+                        Version <span id="extension-version">loading...</span>
+                    </p>
+                </section>
+            </div>
+        </div>
     </div>
 
+    <script src="../lib/marked.min.js"></script>
+    <script src="../lib/purify.min.js"></script>
     <script type="module" src="../lib/popup.js"></script>
 </body>
 </html>

@@ -4,27 +4,61 @@
 
 The Chromium History Extension now uses a Go-based Google Cloud Function backend to handle AI interactions. This eliminates the need for users to provide their own OpenAI API keys.
 
+## UI Updates (December 2025)
+
+The extension UI has been simplified by integrating the settings page directly into the popup window:
+
+### Changes Made
+- **Settings integrated into popup**: The separate options page (`/options/options.html`) content is now rendered inside the popup window
+- **View switching**: Clicking the gear icon shows settings within the popup; a back button returns to chat
+- **Compact design**: All settings fit within the 400x600px popup dimensions
+- **Preserved functionality**: All settings features remain functional (history range, max results, clear chat)
+
+### User Experience
+1. User clicks the gear icon in the popup header
+2. The chat view is hidden, settings view appears
+3. A back button appears in the header (replacing the "New Chat" button)
+4. Header title changes to "Settings"
+5. User can adjust preferences and click back to return to chat
+6. Chat history is preserved when switching views
+
 ## Architecture Changes
 
-### Before (Client-Side)
+### Dual Mode Support
+
+The extension now supports **two modes of operation**:
+
+#### Mode 1: Backend Mode (Default)
 ```
-Chrome Extension → OpenAI API
-                   (user's API key required)
+Chrome Extension → Backend WebSocket → OpenAI API
+                   (no API key needed)  (backend's API key)
 ```
 
-### After (Server-Side)
+#### Mode 2: Direct OpenAI Mode (Optional)
 ```
-Chrome Extension → Cloud Function Backend → OpenAI API
-                   (no user API key needed)  (backend's API key)
+Chrome Extension → OpenAI API
+                   (user provides their own API key)
 ```
+
+Users can choose which mode to use:
+- **Backend Mode**: Leave API key field empty in options (default)
+- **Direct OpenAI Mode**: Provide your own OpenAI API key in options
 
 ## Key Benefits
 
+### Backend Mode
 1. **Better UX**: Users don't need to obtain or manage API keys
 2. **Centralized Management**: Single API key to manage for all users
 3. **Rate Limiting**: Built-in protection against abuse (10 req/min per IP)
 4. **Cost Control**: Better ability to monitor and control OpenAI costs
 5. **Security**: API key never exposed to client-side code
+
+### Direct OpenAI Mode
+1. **User Control**: Users have full control over their own API usage
+2. **No Rate Limits**: No backend rate limiting (subject only to OpenAI's limits)
+3. **Privacy**: History data goes directly to OpenAI, not through any intermediary
+4. **Direct Billing**: Costs are charged directly to user's OpenAI account
+5. **Flexibility**: Users can switch between modes at any time
 
 ## Implementation Details
 
@@ -43,21 +77,46 @@ Chrome Extension → Cloud Function Backend → OpenAI API
 ### Frontend Changes
 
 **Service Worker** (`chromium-extension/extension/background/service_worker.js`):
-- Added `BACKEND_URL` constant (must be updated after deployment)
-- Modified `chatWithHistory()` to call backend instead of OpenAI directly
-- Removed API key requirement
-- Updated error handling for backend responses
+- Added `BACKEND_WS_URL` constant for WebSocket backend connection
+- Modified `chatWithHistory()` to **detect which mode to use** based on API key presence
+- Added `chatWithOpenAI()` function for direct OpenAI API calls (user's API key)
+- Added `chatWithBackend()` function for backend WebSocket communication (no API key needed)
+- **Automatic mode switching**: Checks if user has provided API key and routes accordingly
+- Updated error handling for both backend and direct OpenAI responses
 - **Enhanced to support up to 100,000 history records** (increased from 1,000)
 - **Implemented smart pagination** to bypass Chrome API's 10,000-per-call limit
 - Time-based batching with automatic deduplication
 
 **Options Page** (`chromium-extension/extension/options/options.html`):
-- Removed OpenAI API key input section
-- Added backend connection status information
-- Updated privacy notice to reflect backend usage
+- **Restored OpenAI API key input section** (optional field)
+- Added mode selection information (Backend vs Direct OpenAI)
+- Shows current mode status
+- Updated privacy notice to reflect both modes
 
 **Popup** (`chromium-extension/extension/popup/popup.html`):
 - Updated warning message for connection issues
+
+## How to Switch Modes
+
+### Switching to Direct OpenAI Mode
+
+1. Open the extension options page (right-click extension icon → Options)
+2. In the "AI Access Configuration" section, enter your OpenAI API key
+3. Click "Save API Key"
+4. The extension will now use your API key for direct OpenAI calls
+
+### Switching Back to Backend Mode
+
+1. Open the extension options page
+2. Click "Clear API Key"
+3. The extension will revert to using the backend service
+
+### Checking Current Mode
+
+- Open the popup and click the settings (gear) icon
+- Look for the mode indicator:
+  - "🔑 Direct OpenAI Mode" - Using your API key
+  - "☁️ Backend Mode" - Using the backend service
 
 ## Deployment Process
 

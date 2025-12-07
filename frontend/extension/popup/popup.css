@@ -71,6 +71,10 @@ body {
     left: 16px;
 }
 
+#back-button {
+    left: 16px;
+}
+
 #settings-button {
     right: 16px;
 }
@@ -233,5 +237,337 @@ body {
 }
 
 #chat-container::-webkit-scrollbar-thumb:hover {
+    background: #5a5a5a;
+}
+
+/* Markdown styling for assistant messages */
+.message.assistant p {
+    margin: 0.5em 0;
+}
+
+.message.assistant p:first-child {
+    margin-top: 0;
+}
+
+.message.assistant p:last-child {
+    margin-bottom: 0;
+}
+
+.message.assistant code {
+    background-color: #1a1a1a;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
+    font-size: 0.9em;
+    border: 1px solid #3a3a3a;
+}
+
+.message.assistant pre {
+    background-color: #1a1a1a;
+    border: 1px solid #3a3a3a;
+    border-radius: 4px;
+    padding: 12px;
+    overflow-x: auto;
+    margin: 0.5em 0;
+}
+
+.message.assistant pre code {
+    background-color: transparent;
+    padding: 0;
+    border: none;
+    font-size: 0.85em;
+}
+
+.message.assistant ul,
+.message.assistant ol {
+    margin: 0.5em 0;
+    padding-left: 1.5em;
+}
+
+.message.assistant li {
+    margin: 0.25em 0;
+}
+
+.message.assistant h1,
+.message.assistant h2,
+.message.assistant h3,
+.message.assistant h4,
+.message.assistant h5,
+.message.assistant h6 {
+    margin: 0.8em 0 0.4em 0;
+    font-weight: 600;
+}
+
+.message.assistant h1 { font-size: 1.4em; }
+.message.assistant h2 { font-size: 1.3em; }
+.message.assistant h3 { font-size: 1.2em; }
+.message.assistant h4 { font-size: 1.1em; }
+.message.assistant h5 { font-size: 1em; }
+.message.assistant h6 { font-size: 0.9em; }
+
+.message.assistant blockquote {
+    border-left: 3px solid #4a90e2;
+    margin: 0.5em 0;
+    padding-left: 1em;
+    color: #b0b0b0;
+    font-style: italic;
+}
+
+.message.assistant a {
+    color: #5dade2;
+    text-decoration: underline;
+}
+
+.message.assistant a:hover {
+    color: #7ec5f0;
+}
+
+.message.assistant hr {
+    border: none;
+    border-top: 1px solid #3a3a3a;
+    margin: 1em 0;
+}
+
+.message.assistant table {
+    border-collapse: collapse;
+    margin: 0.5em 0;
+    width: 100%;
+}
+
+.message.assistant th,
+.message.assistant td {
+    border: 1px solid #3a3a3a;
+    padding: 6px 10px;
+    text-align: left;
+}
+
+.message.assistant th {
+    background-color: #1a1a1a;
+    font-weight: 600;
+}
+
+.message.assistant strong {
+    font-weight: 600;
+}
+
+.message.assistant em {
+    font-style: italic;
+}
+
+/* View Container Styles */
+.view-container {
+    display: flex;
+    flex-direction: column;
+    height: calc(100% - 65px); /* Account for header height */
+}
+
+.view-container.hidden {
+    display: none;
+}
+
+/* Settings View Styles */
+#settings-view {
+    overflow-y: auto;
+}
+
+#settings-content {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.settings-section {
+    background-color: #252525;
+    padding: 16px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    border: 1px solid #3a3a3a;
+}
+
+.settings-section h2 {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 10px;
+    color: #f0f0f0;
+}
+
+.settings-section .description {
+    color: #b0b0b0;
+    margin-bottom: 12px;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.form-group {
+    margin-bottom: 16px;
+}
+
+.form-group label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: #e0e0e0;
+    font-size: 13px;
+}
+
+.input-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 8px 40px 8px 10px;
+    border: 1px solid #3a3a3a;
+    border-radius: 4px;
+    font-size: 13px;
+    font-family: inherit;
+    transition: border-color 0.2s;
+    background-color: #2d2d2d;
+    color: #e0e0e0;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: #4a90e2;
+}
+
+.eye-icon {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: #999;
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s;
+    z-index: 1;
+}
+
+.eye-icon:hover {
+    color: #e0e0e0;
+}
+
+.eye-icon:active {
+    color: #4a90e2;
+}
+
+.eye-icon svg {
+    display: block;
+}
+
+.help-text {
+    font-size: 11px;
+    color: #999;
+    margin-top: 4px;
+    line-height: 1.4;
+}
+
+.btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-primary {
+    background-color: #4a90e2;
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #357abd;
+}
+
+.btn-danger {
+    background-color: #dc3545;
+    color: white;
+}
+
+.btn-danger:hover {
+    background-color: #c82333;
+}
+
+.btn:disabled {
+    background-color: #3a3a3a;
+    color: #666;
+    cursor: not-allowed;
+}
+
+.status-message {
+    margin-top: 10px;
+    padding: 8px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    display: none;
+}
+
+.status-message.success {
+    display: block;
+    background-color: #1e4620;
+    color: #88d88c;
+    border: 1px solid #2d6e30;
+}
+
+.status-message.error {
+    display: block;
+    background-color: #4a2020;
+    color: #f48c8c;
+    border: 1px solid #8b3535;
+}
+
+.status-message.info {
+    display: block;
+    background-color: #1a3a4a;
+    color: #88c5db;
+    border: 1px solid #2d5a6e;
+}
+
+.info-box {
+    margin-top: 12px;
+    padding: 10px;
+    background-color: #2d2d2d;
+    border-left: 4px solid #4a90e2;
+    border-radius: 4px;
+}
+
+.info-box strong {
+    display: block;
+    margin-bottom: 4px;
+    color: #f0f0f0;
+    font-size: 13px;
+}
+
+.info-box p {
+    margin: 0;
+    color: #b0b0b0;
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+/* Settings View Scrollbar */
+#settings-view::-webkit-scrollbar {
+    width: 6px;
+}
+
+#settings-view::-webkit-scrollbar-track {
+    background: #2d2d2d;
+}
+
+#settings-view::-webkit-scrollbar-thumb {
+    background: #4a4a4a;
+    border-radius: 3px;
+}
+
+#settings-view::-webkit-scrollbar-thumb:hover {
     background: #5a5a5a;
 }
