@@ -9,8 +9,10 @@ dart/pubspec.lock
 dart/build/
 
 # Compiled outputs
-extension/lib/*.js
+# Only ignore source maps (build artifacts), not source .js files
 extension/lib/*.js.map
+# Ignore minified JavaScript files (third-party libraries)
+extension/lib/*.min.js
 extension/wasm/*.wasm
 extension/wasm/*.js
 

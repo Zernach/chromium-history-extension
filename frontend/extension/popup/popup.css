@@ -571,3 +571,54 @@ body {
 #settings-view::-webkit-scrollbar-thumb:hover {
     background: #5a5a5a;
 }
+
+/* Conversation Starter Bubbles */
+.conversation-starters {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 16px 0;
+    align-items: center;
+}
+
+.conversation-starters-title {
+    font-size: 13px;
+    color: #999;
+    margin-bottom: 4px;
+    font-weight: 500;
+}
+
+.starter-bubbles {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    width: 100%;
+}
+
+.starter-bubble {
+    padding: 10px 14px;
+    background-color: #252525;
+    border: 1px solid #4a90e2;
+    border-radius: 20px;
+    color: #e0e0e0;
+    cursor: pointer;
+    font-size: 13px;
+    font-family: inherit;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    flex-shrink: 0;
+    max-width: 100%;
+    text-align: center;
+}
+
+.starter-bubble:hover {
+    background-color: #4a90e2;
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(74, 144, 226, 0.3);
+}
+
+.starter-bubble:active {
+    transform: translateY(0);
+}
