@@ -1,6 +1,6 @@
 name: chromium_history_extension
 description: Dart bridge layer for Chromium History Chat Extension
-version: 0.1.9
+version: 0.1.11
 environment:
   sdk: '>=3.0.0 <4.0.0'
 

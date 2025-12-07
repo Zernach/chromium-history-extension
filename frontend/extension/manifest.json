@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Chromium History Chat",
-  "version": "0.1.9",
-  "description": "Chat with OpenAI about your browsing history",
+  "version": "0.1.11",
+  "description": "Chat with your browsing history using AI",
   "author": "Chromium History Extension Team",
 
   "permissions": [

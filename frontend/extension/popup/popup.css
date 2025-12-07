@@ -606,10 +606,11 @@ body {
     font-size: 13px;
     font-family: inherit;
     transition: all 0.2s ease;
-    white-space: nowrap;
     flex-shrink: 0;
     max-width: 100%;
     text-align: center;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
 .starter-bubble:hover {
