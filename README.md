@@ -2,6 +2,9 @@
 
 A Chrome extension that lets you chat with AI about your browsing history. Features high-performance Rust/WebAssembly processing and a serverless Go backend.
 
+<img width="411" height="607" alt="image" src="https://github.com/user-attachments/assets/c4a47320-c02b-48db-a38f-5f918f579673" />
+
+
 ## Project Overview
 
 This project consists of two main components:
